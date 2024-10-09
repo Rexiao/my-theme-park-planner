@@ -23,6 +23,12 @@ export function MainNav({
       >
         Itineraries
       </Link>
+      <Link
+        href="/login"
+        className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+      >
+        Login
+      </Link>
     </nav>
   )
 }

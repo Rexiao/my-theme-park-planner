@@ -28,6 +28,8 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signUp({ email, password })
     if (error) {
       console.error(error)
+      // route to error page
+      router.push('/error')
     } else {
       router.push('/')
     }
