@@ -12,7 +12,7 @@ export const signUpAction = async (formData: FormData) => {
   const origin = headers().get("origin");
 
   if (!email || !password) {
-    return { error: "Email and password are required" };
+    return encodedRedirect("error", "/sign-up", "Invalid email or password");
   }
 
   const { error } = await supabase.auth.signUp({
@@ -46,7 +46,7 @@ export const signInAction = async (formData: FormData) => {
   });
 
   if (error) {
-    return encodedRedirect("error", "/sign-in", error.message);
+    return encodedRedirect("error", "/login", error.message);
   }
 
   return redirect("/itineraries");
@@ -126,5 +126,5 @@ export const resetPasswordAction = async (formData: FormData) => {
 export const signOutAction = async () => {
   const supabase = createClient();
   await supabase.auth.signOut();
-  return redirect("/sign-in");
+  return redirect("/login");
 };

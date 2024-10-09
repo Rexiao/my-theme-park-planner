@@ -10,5 +10,5 @@ export default async function ItinerariesPage() {
     redirect('/login')
   }
 
-  return <ItinerariesList userEmail={data.user.email} />
+  return <ItinerariesList userEmail={data.user.email ?? ''} />
 }

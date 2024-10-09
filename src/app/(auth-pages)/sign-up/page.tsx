@@ -21,7 +21,7 @@ export default function Signup({ searchParams }: { searchParams: Message }) {
         <h1 className="text-2xl font-medium">Sign up</h1>
         <p className="text-sm text text-foreground">
           Already have an account?{" "}
-          <Link className="text-primary font-medium underline" href="/sign-in">
+          <Link className="text-primary font-medium underline" href="/login">
             Sign in
           </Link>
         </p>
@@ -36,12 +36,7 @@ export default function Signup({ searchParams }: { searchParams: Message }) {
             minLength={6}
             required
           />
-          <SubmitButton formAction={async (formData) => {
-            const result = await signUpAction(formData);
-            if (result.error) {
-              encodedRedirect("error", "/sign-up", result.error);
-            }
-          }} pendingText="Signing up...">
+          <SubmitButton formAction={signUpAction} pendingText="Signing up...">
             Sign up
           </SubmitButton>
           <FormMessage message={searchParams} />
