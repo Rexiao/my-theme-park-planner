@@ -1,36 +1,24 @@
-import { type EmailOtpType } from '@supabase/supabase-js'
-import type { NextApiRequest, NextApiResponse } from 'next'
+import { createClient } from "@/utils/supabase/server";
+import { NextResponse } from "next/server";
 
-import createClient from '@/utils/supabase/api'
+export async function GET(request: Request) {
+  // The `/auth/callback` route is required for the server-side auth flow implemented
+  // by the SSR package. It exchanges an auth code for the user's session.
+  // https://supabase.com/docs/guides/auth/server-side/nextjs
+  const requestUrl = new URL(request.url);
+  const code = requestUrl.searchParams.get("code");
+  const origin = requestUrl.origin;
+  const redirectTo = requestUrl.searchParams.get("redirect_to")?.toString();
 
-function stringOrFirstString(item: string | string[] | undefined) {
-  return Array.isArray(item) ? item[0] : item
-}
-
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'GET') {
-    res.status(405).appendHeader('Allow', 'GET').end()
-    return
+  if (code) {
+    const supabase = createClient();
+    await supabase.auth.exchangeCodeForSession(code);
   }
 
-  const queryParams = req.query
-  const token_hash = stringOrFirstString(queryParams.token_hash)
-  const type = stringOrFirstString(queryParams.type)
-
-  let next = '/error'
-
-  if (token_hash && type) {
-    const supabase = createClient(req, res)
-    const { error } = await supabase.auth.verifyOtp({
-      type: type as EmailOtpType,
-      token_hash,
-    })
-    if (error) {
-      console.error(error)
-    } else {
-      next = stringOrFirstString(queryParams.next) || '/'
-    }
+  if (redirectTo) {
+    return NextResponse.redirect(`${origin}${redirectTo}`);
   }
 
-  res.redirect(next)
+  // URL to redirect to after sign up process completes
+  return NextResponse.redirect(`${origin}/itineraries`);
 }
