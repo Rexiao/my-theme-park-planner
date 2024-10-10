@@ -29,10 +29,13 @@ Provide only the updated itinerary content in your response, maintaining the ori
 
   try {
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: 'gpt-4o',
       messages: [
-        { role: "system", content: "You are a helpful assistant that updates Disney World itineraries." },
-        { role: "user", content: prompt }
+        {
+          role: 'system',
+          content: 'You are a helpful assistant that updates Disney World itineraries.',
+        },
+        { role: 'user', content: prompt },
       ],
     });
 

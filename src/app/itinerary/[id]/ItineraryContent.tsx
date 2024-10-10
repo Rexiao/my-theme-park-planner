@@ -1,10 +1,22 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 
 const itineraryMarkdown = `
 **Before Your Visit (7 Days in Advance):**  
@@ -145,7 +157,7 @@ interface ItineraryContentProps {
   userEmail: string;
 }
 
-export default function ItineraryContent({ id, userEmail }: ItineraryContentProps) {
+export default function ItineraryContent({ id }: ItineraryContentProps) {
   const [selectedAttraction, setSelectedAttraction] = useState<string | null>(null);
   const [currentItinerary, setCurrentItinerary] = useState<string>(itineraryMarkdown);
   const [isUpdating, setIsUpdating] = useState<boolean>(false);
@@ -192,7 +204,7 @@ export default function ItineraryContent({ id, userEmail }: ItineraryContentProp
     }
   };
 
-  const sections = currentItinerary.split('---').map(section => section.trim());
+  const sections = currentItinerary.split('---').map((section) => section.trim());
 
   return (
     <div className="py-8">
@@ -213,14 +225,17 @@ export default function ItineraryContent({ id, userEmail }: ItineraryContentProp
               <div className="prose prose-sm sm:prose max-w-none">
                 <ReactMarkdown
                   components={{
-                    a: ({ node, ...props }) => (
+                    a: ({ ...props }) => (
                       <a
                         {...props}
                         onClick={(e) => {
                           e.preventDefault();
                           if (typeof props.children === 'string') {
                             handleAttractionClick(props.children);
-                          } else if (Array.isArray(props.children) && typeof props.children[0] === 'string') {
+                          } else if (
+                            Array.isArray(props.children) &&
+                            typeof props.children[0] === 'string'
+                          ) {
                             handleAttractionClick(props.children[0]);
                           }
                         }}
@@ -246,10 +261,12 @@ export default function ItineraryContent({ id, userEmail }: ItineraryContentProp
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button onClick={() => {
-              updateItinerary(`Mark ${selectedAttraction} as completed`);
-              setSelectedAttraction(null);
-            }}>
+            <Button
+              onClick={() => {
+                updateItinerary(`Mark ${selectedAttraction} as completed`);
+                setSelectedAttraction(null);
+              }}
+            >
               Mark as Completed
             </Button>
           </DialogFooter>

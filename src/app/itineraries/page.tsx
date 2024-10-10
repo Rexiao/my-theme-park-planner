@@ -1,14 +1,14 @@
-import { redirect } from 'next/navigation'
-import { createClient } from '@/utils/supabase/server'
-import ItinerariesList from './ItinerariesList'
+import { redirect } from 'next/navigation';
+import { createClient } from '@/utils/supabase/server';
+import ItinerariesList from './ItinerariesList';
 
 export default async function ItinerariesPage() {
-  const supabase = createClient()
+  const supabase = createClient();
 
-  const { data, error } = await supabase.auth.getUser()
+  const { data, error } = await supabase.auth.getUser();
   if (error || !data?.user) {
-    redirect('/login')
+    redirect('/login');
   }
 
-  return <ItinerariesList userEmail={data.user.email ?? ''} />
+  return <ItinerariesList userEmail={data.user.email ?? ''} />;
 }

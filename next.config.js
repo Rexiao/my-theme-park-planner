@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  productionBrowserSourceMaps: true
-}
+  productionBrowserSourceMaps: true,
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;
