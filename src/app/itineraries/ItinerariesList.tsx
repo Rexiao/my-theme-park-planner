@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { createClient } from '@/utils/supabase/client';
 
 interface Itinerary {
   id: string;
@@ -15,15 +16,23 @@ interface ItinerariesListProps {
 
 export default function ItinerariesList({ userEmail }: ItinerariesListProps) {
   const [itineraries, setItineraries] = useState<Itinerary[]>([]);
+  const supabase = createClient();
 
   useEffect(() => {
-    // Fetch itineraries from Supabase (mock data for now)
-    const mockItineraries: Itinerary[] = [
-      { id: '1', name: 'Magic Kingdom Adventure', date: '2023-12-15' },
-      { id: '2', name: 'Epcot Exploration', date: '2023-12-20' },
-      { id: '3', name: 'Hollywood Studios Tour', date: '2023-12-25' },
-    ];
-    setItineraries(mockItineraries);
+    const fetchItineraries = async () => {
+      const { data, error } = await supabase
+        .from('itineraries')
+        .select('id, name, date')
+        .order('date', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching itineraries:', error);
+      } else {
+        setItineraries(data || []);
+      }
+    };
+
+    fetchItineraries();
   }, []);
 
   return (
@@ -35,7 +44,7 @@ export default function ItinerariesList({ userEmail }: ItinerariesListProps) {
           <Card key={itinerary.id}>
             <CardHeader>
               <CardTitle>{itinerary.name}</CardTitle>
-              <CardDescription>Date: {itinerary.date}</CardDescription>
+              <CardDescription>Date: {new Date(itinerary.date).toLocaleDateString()}</CardDescription>
             </CardHeader>
             <CardContent>
               <Link href={`/itinerary/${itinerary.id}`} className="text-blue-500 hover:underline">

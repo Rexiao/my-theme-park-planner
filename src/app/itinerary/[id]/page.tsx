@@ -10,5 +10,5 @@ export default async function ItineraryPage({ params }: { params: { id: string }
     redirect('/login');
   }
 
-  return <ItineraryContent id={params.id} userEmail={data.user.email ?? ''} />;
+  return <ItineraryContent id={params.id} />;
 }
