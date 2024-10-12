@@ -19,6 +19,7 @@ export default function NavBar({ isAuthenticated }: NavBarProps) {
   const navItems = [
     { name: 'Home', path: '/' },
     { name: 'Itineraries', path: '/itineraries' },
+    { name: 'Create Itinerary', path: '/create-itinerary' },
     // Add other navigation items as needed
   ];
 
