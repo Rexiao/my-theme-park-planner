@@ -8,9 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Calendar } from '@/components/ui/calendar';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
 
 interface ThemePark {
   id: number;
@@ -28,11 +28,12 @@ export default function CreateItineraryForm({ themeParks }: CreateItineraryFormP
     date: new Date(),
     adults: 1,
     children: 0,
-    mustHaveRides: [] as string[],
     preferredPace: '',
     earlyEntry: false,
     lightningLaneMulti: false,
     memoryMaker: false,
+    email: '',
+    additionalComments: '',
   });
 
   const handleParkChange = (value: string) => {
@@ -45,18 +46,9 @@ export default function CreateItineraryForm({ themeParks }: CreateItineraryFormP
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: parseInt(value) || 0 });
-  };
-
-  const handleCheckboxChange = (ride: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      mustHaveRides: prev.mustHaveRides.includes(ride)
-        ? prev.mustHaveRides.filter((r) => r !== ride)
-        : [...prev.mustHaveRides, ride],
-    }));
+    setFormData({ ...formData, [name]: name === 'adults' || name === 'children' ? parseInt(value) || 0 : value });
   };
 
   const handlePaceChange = (value: string) => {
@@ -74,15 +66,6 @@ export default function CreateItineraryForm({ themeParks }: CreateItineraryFormP
     // For now, we'll just log it and redirect to the itineraries page
     router.push('/itineraries');
   };
-
-  // This should be dynamically populated based on the selected park
-  const popularRides = [
-    "Space Mountain",
-    "Big Thunder Mountain Railroad",
-    "Splash Mountain",
-    "Haunted Mansion",
-    "Pirates of the Caribbean",
-  ];
 
   return (
     <div className="container mx-auto py-8">
@@ -145,20 +128,6 @@ export default function CreateItineraryForm({ themeParks }: CreateItineraryFormP
             </div>
 
             <div className="space-y-4">
-              <Label>Must-Have Rides and Attractions</Label>
-              {popularRides.map((ride) => (
-                <div key={ride} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={ride}
-                    checked={formData.mustHaveRides.includes(ride)}
-                    onCheckedChange={() => handleCheckboxChange(ride)}
-                  />
-                  <label htmlFor={ride}>{ride}</label>
-                </div>
-              ))}
-            </div>
-
-            <div className="space-y-4">
               <Label>Preferred Pace</Label>
               <RadioGroup onValueChange={handlePaceChange} value={formData.preferredPace}>
                 <div className="flex items-center space-x-2">
@@ -202,6 +171,29 @@ export default function CreateItineraryForm({ themeParks }: CreateItineraryFormP
                 />
                 <label htmlFor="memoryMaker">Memory Maker</label>
               </div>
+            </div>
+
+            <div className="space-y-4">
+              <Label htmlFor="email">Email (Optional)</Label>
+              <Input
+                type="email"
+                id="email"
+                name="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                placeholder="Enter your email to receive the itinerary"
+              />
+            </div>
+
+            <div className="space-y-4">
+              <Label htmlFor="additionalComments">Additional Comments or Preferences</Label>
+              <Textarea
+                id="additionalComments"
+                name="additionalComments"
+                value={formData.additionalComments}
+                onChange={handleInputChange}
+                placeholder="Enter any other requests or information that might affect your itinerary (e.g., preferred attractions, dining preferences, accessibility needs)"
+              />
             </div>
 
             <Button type="submit">Create Itinerary</Button>
