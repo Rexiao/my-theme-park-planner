@@ -4,13 +4,20 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
 
 interface ThemePark {
   id: number;
@@ -23,6 +30,7 @@ interface CreateItineraryFormProps {
 
 export default function CreateItineraryForm({ themeParks }: CreateItineraryFormProps) {
   const router = useRouter();
+  const { toast } = useToast();
   const [formData, setFormData] = useState({
     parkId: '',
     parkName: '',
@@ -37,12 +45,15 @@ export default function CreateItineraryForm({ themeParks }: CreateItineraryFormP
     additionalComments: '',
   });
 
+  const [isLoading, setIsLoading] = useState(false);
+  const [generatedItinerary, setGeneratedItinerary] = useState<string | null>(null);
+
   const handleParkChange = (value: string) => {
-    const selectedPark = themeParks.find(park => park.id.toString() === value);
-    setFormData({ 
-      ...formData, 
+    const selectedPark = themeParks.find((park) => park.id.toString() === value);
+    setFormData({
+      ...formData,
       parkId: value,
-      parkName: selectedPark ? selectedPark.name : ''
+      parkName: selectedPark ? selectedPark.name : '',
     });
   };
 
@@ -54,7 +65,10 @@ export default function CreateItineraryForm({ themeParks }: CreateItineraryFormP
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: name === 'adults' || name === 'children' ? parseInt(value) || 0 : value });
+    setFormData({
+      ...formData,
+      [name]: name === 'adults' || name === 'children' ? parseInt(value) || 0 : value,
+    });
   };
 
   const handlePaceChange = (value: string) => {
@@ -65,12 +79,41 @@ export default function CreateItineraryForm({ themeParks }: CreateItineraryFormP
     setFormData((prev) => ({ ...prev, [name]: !prev[name as keyof typeof prev] }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
-    // Here you would typically send the data to your backend or ChatGPT
-    // For now, we'll just log it and redirect to the itineraries page
-    router.push('/itineraries');
+    setIsLoading(true);
+    setGeneratedItinerary(null);
+
+    try {
+      const response = await fetch('/api/generate-itinerary', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate itinerary');
+      }
+
+      const data = await response.json();
+      setGeneratedItinerary(data.itinerary);
+      toast({
+        title: 'Success',
+        description: 'Itinerary generated successfully!',
+      });
+      router.push('/itineraries');
+    } catch (error) {
+      console.error('Error generating itinerary:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to generate itinerary. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -202,10 +245,23 @@ export default function CreateItineraryForm({ themeParks }: CreateItineraryFormP
               />
             </div>
 
-            <Button type="submit">Create Itinerary</Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? 'Generating...' : 'Create Itinerary'}
+            </Button>
           </form>
         </CardContent>
       </Card>
+
+      {generatedItinerary && (
+        <Card className="mt-8">
+          <CardHeader>
+            <CardTitle>Generated Itinerary</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <pre className="whitespace-pre-wrap">{generatedItinerary}</pre>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
