@@ -24,7 +24,8 @@ interface CreateItineraryFormProps {
 export default function CreateItineraryForm({ themeParks }: CreateItineraryFormProps) {
   const router = useRouter();
   const [formData, setFormData] = useState({
-    park: '',
+    parkId: '',
+    parkName: '',
     date: new Date(),
     adults: 1,
     children: 0,
@@ -37,7 +38,12 @@ export default function CreateItineraryForm({ themeParks }: CreateItineraryFormP
   });
 
   const handleParkChange = (value: string) => {
-    setFormData({ ...formData, park: value });
+    const selectedPark = themeParks.find(park => park.id.toString() === value);
+    setFormData({ 
+      ...formData, 
+      parkId: value,
+      parkName: selectedPark ? selectedPark.name : ''
+    });
   };
 
   const handleDateChange = (date: Date | undefined) => {
@@ -78,7 +84,7 @@ export default function CreateItineraryForm({ themeParks }: CreateItineraryFormP
           <form onSubmit={handleSubmit} className="space-y-8">
             <div className="space-y-4">
               <Label htmlFor="park">Select Park</Label>
-              <Select onValueChange={handleParkChange} value={formData.park}>
+              <Select onValueChange={handleParkChange} value={formData.parkId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Choose a park" />
                 </SelectTrigger>
