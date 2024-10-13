@@ -96,7 +96,7 @@ export default function CreateItineraryForm({ themeParks }: CreateItineraryFormP
       }
 
       const data = await response.json();
-      
+
       if (data.success) {
         toast({
           title: 'Success',

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { createClient } from '@/utils/supabase/server';
-import fs from 'fs';
 // Initialize the OpenAI client
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -76,7 +75,7 @@ function generateDetailedPrompt(
     'a moderate and balanced';
   const totalGuests = formData.adults + formData.children;
 
-  let prompt = `
+  const prompt = `
 Generate a detailed itinerary for ${totalGuests} guest${totalGuests !== 1 ? 's' : ''} visiting ${formData.parkName} at Walt Disney World Resort on ${formattedDate}.
 
 Guest Details and Preferences:
