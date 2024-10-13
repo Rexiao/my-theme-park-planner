@@ -136,9 +136,7 @@ export async function POST(request: NextRequest) {
       example,
     );
 
-    // test
-    // save prompt to file
-    fs.writeFileSync('detailedPrompt.txt', detailedPrompt);
+    console.log(detailedPrompt);
 
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o',
