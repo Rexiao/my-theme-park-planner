@@ -46,7 +46,6 @@ export default function CreateItineraryForm({ themeParks }: CreateItineraryFormP
   });
 
   const [isLoading, setIsLoading] = useState(false);
-  const [generatedItinerary, setGeneratedItinerary] = useState<string | null>(null);
 
   const handleParkChange = (value: string) => {
     const selectedPark = themeParks.find((park) => park.id.toString() === value);
@@ -82,7 +81,6 @@ export default function CreateItineraryForm({ themeParks }: CreateItineraryFormP
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setGeneratedItinerary(null);
 
     try {
       const response = await fetch('/api/generate-itinerary', {
@@ -98,12 +96,16 @@ export default function CreateItineraryForm({ themeParks }: CreateItineraryFormP
       }
 
       const data = await response.json();
-      setGeneratedItinerary(data.itinerary);
-      toast({
-        title: 'Success',
-        description: 'Itinerary generated successfully!',
-      });
-      router.push('/itineraries');
+      
+      if (data.success) {
+        toast({
+          title: 'Success',
+          description: 'Itinerary generated successfully!',
+        });
+        router.push(`/itinerary/${data.itineraryId}`);
+      } else {
+        throw new Error(data.error || 'Failed to generate itinerary');
+      }
     } catch (error) {
       console.error('Error generating itinerary:', error);
       toast({
@@ -251,17 +253,6 @@ export default function CreateItineraryForm({ themeParks }: CreateItineraryFormP
           </form>
         </CardContent>
       </Card>
-
-      {generatedItinerary && (
-        <Card className="mt-8">
-          <CardHeader>
-            <CardTitle>Generated Itinerary</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <pre className="whitespace-pre-wrap">{generatedItinerary}</pre>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }
