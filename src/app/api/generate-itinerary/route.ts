@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { createClient } from '@/utils/supabase/server';
+import { supabaseAdmin } from '@/utils/supabase/admin';
 // Initialize the OpenAI client
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -21,8 +22,7 @@ interface ItineraryFormData {
 }
 
 async function fetchThemeParkInfo(parkId: string) {
-  const supabase = createClient();
-  const { data: resources, error: resourcesError } = await supabase
+  const { data: resources, error: resourcesError } = await supabaseAdmin
     .from('theme_park_info')
     .select('content')
     .eq('theme_park_id', parkId)
@@ -33,7 +33,7 @@ async function fetchThemeParkInfo(parkId: string) {
     return { resources: [], example: null };
   }
 
-  const { data: examples, error: examplesError } = await supabase
+  const { data: examples, error: examplesError } = await supabaseAdmin
     .from('theme_park_info')
     .select('content')
     .eq('theme_park_id', parkId)
