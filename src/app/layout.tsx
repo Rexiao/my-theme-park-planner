@@ -1,6 +1,7 @@
 import { createClient } from '@/utils/supabase/server';
 import NavBar from '@/components/NavBar';
 import './globals.css';
+import { Toaster } from '@/components/ui/toaster';
 
 export const metadata = {
   title: 'Disney Trip Planner',
@@ -18,6 +19,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body>
         <NavBar isAuthenticated={!!user} />
         <main className="container mx-auto px-4">{children}</main>
+        <Toaster />
       </body>
     </html>
   );

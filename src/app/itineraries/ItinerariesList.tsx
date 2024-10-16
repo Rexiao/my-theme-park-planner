@@ -44,7 +44,9 @@ export default function ItinerariesList({ userEmail }: ItinerariesListProps) {
           <Card key={itinerary.id}>
             <CardHeader>
               <CardTitle>{itinerary.name}</CardTitle>
-              <CardDescription>Date: {new Date(itinerary.date).toLocaleDateString()}</CardDescription>
+              <CardDescription>
+                Date: {new Date(itinerary.date).toLocaleDateString()}
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <Link href={`/itinerary/${itinerary.id}`} className="text-blue-500 hover:underline">
