@@ -98,6 +98,9 @@ Instructions:
 8. Provide tips for managing crowds and maximizing enjoyment.
 9. Suggest alternative activities or attractions in case of long wait times.
 10. Include a brief conclusion with tips for ending the day (e.g., best spots for fireworks, last-minute must-dos).
+11. Format the itinerary with clear section breaks:
+    - Use "---" on a separate line to divide major sections (e.g., "Before Your Visit", "Day of Your Visit", "Morning", "Afternoon", etc.).
+
 
 Format the itinerary as follows:
 1. A brief introduction summarizing the day ahead. If Lightning Lane Multi Pass is purchased, tell the user which rides they should get Lightning Lane passes for and in which time slots.
