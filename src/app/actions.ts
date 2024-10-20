@@ -8,11 +8,17 @@ import { redirect } from 'next/navigation';
 export const signUpAction = async (formData: FormData) => {
   const email = formData.get('email')?.toString();
   const password = formData.get('password')?.toString();
+  const inviteCode = formData.get('inviteCode')?.toString();
   const supabase = createClient();
   const origin = headers().get('origin');
 
-  if (!email || !password) {
-    return encodedRedirect('error', '/sign-up', 'Invalid email or password');
+  if (!email || !password || !inviteCode) {
+    return encodedRedirect('error', '/sign-up', 'All fields are required');
+  }
+
+  // Check if the invite code is correct
+  if (inviteCode !== process.env.INVITE_CODE) {
+    return encodedRedirect('error', '/sign-up', 'Invalid invitation code');
   }
 
   const { error } = await supabase.auth.signUp({
@@ -49,7 +55,7 @@ export const signInAction = async (formData: FormData) => {
     return encodedRedirect('error', '/login', error.message);
   }
 
-  return redirect('/itineraries');
+  return redirect('/protected/itineraries');
 };
 
 export const forgotPasswordAction = async (formData: FormData) => {

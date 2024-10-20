@@ -10,16 +10,19 @@ import { useState } from 'react';
 
 interface NavBarProps {
   isAuthenticated: boolean;
+  isAdmin: boolean;
 }
 
-export default function NavBar({ isAuthenticated }: NavBarProps) {
+export default function NavBar({ isAuthenticated, isAdmin }: NavBarProps) {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
 
   const navItems = [
     { name: 'Home', path: '/' },
-    { name: 'Itineraries', path: '/itineraries' },
-    { name: 'Create Itinerary', path: '/create-itinerary' },
+    { name: 'Itineraries', path: '/protected/itineraries' },
+    { name: 'Create Itinerary', path: '/protected/create-itinerary' },
+    // Add the admin link conditionally
+    ...(isAdmin ? [{ name: 'Admin', path: '/admin' }] : []),
     // Add other navigation items as needed
   ];
 

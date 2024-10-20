@@ -35,6 +35,8 @@ export default function Signup({ searchParams }: { searchParams: Message }) {
             minLength={6}
             required
           />
+          <Label htmlFor="inviteCode">Invitation Code</Label>
+          <Input name="inviteCode" placeholder="Enter your invitation code" required />
           <SubmitButton formAction={signUpAction} pendingText="Signing up...">
             Sign up
           </SubmitButton>

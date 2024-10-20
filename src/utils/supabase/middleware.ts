@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { type NextRequest, NextResponse } from 'next/server';
+import { isUserAdmin } from '../auth';
 
 export const updateSession = async (request: NextRequest) => {
   // Create an unmodified response
@@ -36,14 +37,21 @@ export const updateSession = async (request: NextRequest) => {
     data: { user },
   } = await supabase.auth.getUser();
 
+  const protectedRoutes = ['/admin', '/api', '/protected'];
   // protected routes
-  if (
-    !user &&
-    !request.nextUrl.pathname.startsWith('/login') &&
-    !request.nextUrl.pathname.startsWith('/auth')
-  ) {
+  if (!user && protectedRoutes.some((path) => request.nextUrl.pathname.startsWith(path))) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
+    return NextResponse.redirect(url);
+  }
+
+  const adminStartWith = ['/admin', '/api/admin'];
+  if (
+    adminStartWith.some((path) => request.nextUrl.pathname.startsWith(path)) &&
+    !isUserAdmin(user?.email)
+  ) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/';
     return NextResponse.redirect(url);
   }
 
