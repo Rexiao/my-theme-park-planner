@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { type NextRequest, NextResponse } from 'next/server';
+import { isUserAdmin } from '../auth';
 
 export const updateSession = async (request: NextRequest) => {
   // Create an unmodified response
@@ -32,15 +33,26 @@ export const updateSession = async (request: NextRequest) => {
 
   // This will refresh session if expired - required for Server Components
   // https://supabase.com/docs/guides/auth/server-side/nextjs
-  const user = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
+  const protectedRoutes = ['/admin', '/api', '/protected'];
   // protected routes
-  if (request.nextUrl.pathname.startsWith('/protected') && user.error) {
-    return NextResponse.redirect(new URL('/login', request.url));
+  if (!user && protectedRoutes.some((path) => request.nextUrl.pathname.startsWith(path))) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/login';
+    return NextResponse.redirect(url);
   }
 
-  if (request.nextUrl.pathname === '/' && !user.error) {
-    return NextResponse.redirect(new URL('/protected', request.url));
+  const adminStartWith = ['/admin', '/api/admin'];
+  if (
+    adminStartWith.some((path) => request.nextUrl.pathname.startsWith(path)) &&
+    !isUserAdmin(user?.email)
+  ) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/';
+    return NextResponse.redirect(url);
   }
 
   return response;
