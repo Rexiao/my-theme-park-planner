@@ -11,12 +11,9 @@ interface Itinerary {
   date: string;
 }
 
-interface ItinerariesListProps {
-  userEmail: string;
-}
-
-export default function ItinerariesList({ userEmail }: ItinerariesListProps) {
+export default function ItinerariesList() {
   const [itineraries, setItineraries] = useState<Itinerary[]>([]);
+  const [userEmail, setUserEmail] = useState('');
   const supabase = createClient();
 
   useEffect(() => {
@@ -33,7 +30,17 @@ export default function ItinerariesList({ userEmail }: ItinerariesListProps) {
       }
     };
 
+    // get email
+    const getEmail = async () => {
+      const { data, error } = await supabase.auth.getUser();
+      if (error || !data?.user) {
+        return '';
+      }
+      setUserEmail(data.user.email ?? '');
+    };
+
     fetchItineraries();
+    getEmail();
   }, []);
 
   return (
@@ -50,7 +57,10 @@ export default function ItinerariesList({ userEmail }: ItinerariesListProps) {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Link href={`/itinerary/${itinerary.id}`} className="text-blue-500 hover:underline">
+              <Link
+                href={`/protected/itinerary/${itinerary.id}`}
+                className="text-blue-500 hover:underline"
+              >
                 View Itinerary
               </Link>
             </CardContent>
