@@ -24,7 +24,7 @@ export default function Home() {
           </CardContent>
           <CardFooter className="flex justify-center">
             <Button asChild className="w-full sm:w-auto">
-              <Link href="/itineraries">View Itineraries</Link>
+              <Link href="/protected/itineraries">View Itineraries</Link>
             </Button>
           </CardFooter>
         </Card>

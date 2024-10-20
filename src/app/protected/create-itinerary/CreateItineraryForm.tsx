@@ -18,6 +18,9 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
 
 interface ThemePark {
   id: number;
@@ -28,58 +31,55 @@ interface CreateItineraryFormProps {
   themeParks: ThemePark[];
 }
 
+const formSchema = z.object({
+  parkId: z.string().min(1, 'Please select a park'),
+  parkName: z.string().min(1, 'Park name is required'),
+  date: z.date().min(new Date(), 'Date must be in the future'),
+  adults: z.number().int().min(1, 'At least one adult is required'),
+  children: z.number().int().min(0, 'Number of children cannot be negative'),
+  preferredPace: z.enum(['relaxed', 'moderate', 'packed'], {
+    required_error: 'Please select a preferred pace',
+  }),
+  earlyEntry: z.boolean(),
+  lightningLaneMulti: z.boolean(),
+  memoryMaker: z.boolean(),
+  email: z.string().email('Invalid email address').optional().or(z.literal('')),
+  additionalComments: z.string().optional(),
+});
+
+type FormData = z.infer<typeof formSchema>;
+
 export default function CreateItineraryForm({ themeParks }: CreateItineraryFormProps) {
   const router = useRouter();
   const { toast } = useToast();
-  const [formData, setFormData] = useState({
-    parkId: '',
-    parkName: '',
-    date: new Date(),
-    adults: 1,
-    children: 0,
-    preferredPace: '',
-    earlyEntry: false,
-    lightningLaneMulti: false,
-    memoryMaker: false,
-    email: '',
-    additionalComments: '',
-  });
-
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleParkChange = (value: string) => {
-    const selectedPark = themeParks.find((park) => park.id.toString() === value);
-    setFormData({
-      ...formData,
-      parkId: value,
-      parkName: selectedPark ? selectedPark.name : '',
-    });
-  };
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      parkId: '',
+      parkName: '',
+      date: new Date(),
+      adults: 1,
+      children: 0,
+      preferredPace: 'moderate',
+      earlyEntry: false,
+      lightningLaneMulti: false,
+      memoryMaker: false,
+      email: '',
+      additionalComments: '',
+    },
+  });
 
-  const handleDateChange = (date: Date | undefined) => {
-    if (date) {
-      setFormData({ ...formData, date });
-    }
-  };
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    setValue,
+    watch,
+  } = form;
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: name === 'adults' || name === 'children' ? parseInt(value) || 0 : value,
-    });
-  };
-
-  const handlePaceChange = (value: string) => {
-    setFormData({ ...formData, preferredPace: value });
-  };
-
-  const handleSwitchChange = (name: string) => {
-    setFormData((prev) => ({ ...prev, [name]: !prev[name as keyof typeof prev] }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: FormData) => {
     setIsLoading(true);
 
     try {
@@ -88,23 +88,23 @@ export default function CreateItineraryForm({ themeParks }: CreateItineraryFormP
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(data),
       });
 
       if (!response.ok) {
         throw new Error('Failed to generate itinerary');
       }
 
-      const data = await response.json();
+      const responseData = await response.json();
 
-      if (data.success) {
+      if (responseData.success) {
         toast({
           title: 'Success',
           description: 'Itinerary generated successfully!',
         });
-        router.push(`/itinerary/${data.itineraryId}`);
+        router.push(`/protected/itinerary/${responseData.itineraryId}`);
       } else {
-        throw new Error(data.error || 'Failed to generate itinerary');
+        throw new Error(responseData.error || 'Failed to generate itinerary');
       }
     } catch (error) {
       console.error('Error generating itinerary:', error);
@@ -118,6 +118,44 @@ export default function CreateItineraryForm({ themeParks }: CreateItineraryFormP
     }
   };
 
+  // Update existing handlers to use setValue
+  const handleParkChange = (value: string) => {
+    const selectedPark = themeParks.find((park) => park.id.toString() === value);
+    if (selectedPark) {
+      setValue('parkId', value);
+      setValue('parkName', selectedPark.name);
+    } else {
+      // themepark has data error, but it should not happen
+      toast({
+        title: 'Error',
+        description: 'Failed to get park data. Please refresh the page.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleDateChange = (date: Date | undefined) => {
+    if (date) {
+      setValue('date', date);
+    }
+  };
+
+  const handlePaceChange = (value: string) => {
+    setValue('preferredPace', value as 'relaxed' | 'moderate' | 'packed');
+  };
+
+  const handleSwitchChange = (name: 'earlyEntry' | 'lightningLaneMulti' | 'memoryMaker') => {
+    setValue(name, !watch(name));
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Enter' && event.target instanceof HTMLElement) {
+      if (event.target.id === 'submit-button') {
+        event.preventDefault();
+      }
+    }
+  };
+
   return (
     <div className="container mx-auto py-8">
       <h1 className="text-2xl font-bold mb-6">Create New Itinerary</h1>
@@ -126,10 +164,11 @@ export default function CreateItineraryForm({ themeParks }: CreateItineraryFormP
           <CardTitle>Itinerary Details</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-8">
+          <form onSubmit={handleSubmit(onSubmit)} onKeyDown={handleKeyDown} className="space-y-8">
+            {/* Update form fields to use register and display error messages */}
             <div className="space-y-4">
               <Label htmlFor="park">Select Park</Label>
-              <Select onValueChange={handleParkChange} value={formData.parkId}>
+              <Select onValueChange={handleParkChange} value={watch('parkId')}>
                 <SelectTrigger>
                   <SelectValue placeholder="Choose a park" />
                 </SelectTrigger>
@@ -141,16 +180,18 @@ export default function CreateItineraryForm({ themeParks }: CreateItineraryFormP
                   ))}
                 </SelectContent>
               </Select>
+              {errors.parkId && <p className="text-red-500 text-sm">{errors.parkId.message}</p>}
             </div>
 
             <div className="space-y-4">
               <Label>Select Date</Label>
               <Calendar
                 mode="single"
-                selected={formData.date}
+                selected={watch('date')}
                 onSelect={handleDateChange}
                 className="rounded-md border"
               />
+              {errors.date && <p className="text-red-500 text-sm">{errors.date.message}</p>}
             </div>
 
             <div className="space-y-4">
@@ -159,28 +200,28 @@ export default function CreateItineraryForm({ themeParks }: CreateItineraryFormP
                 <Input
                   type="number"
                   id="adults"
-                  name="adults"
-                  value={formData.adults}
-                  onChange={handleInputChange}
+                  {...register('adults', { valueAsNumber: true })}
                   min={1}
                 />
+                {errors.adults && <p className="text-red-500 text-sm">{errors.adults.message}</p>}
               </div>
               <div>
                 <Label htmlFor="children">Number of Children</Label>
                 <Input
                   type="number"
                   id="children"
-                  name="children"
-                  value={formData.children}
-                  onChange={handleInputChange}
+                  {...register('children', { valueAsNumber: true })}
                   min={0}
                 />
+                {errors.children && (
+                  <p className="text-red-500 text-sm">{errors.children.message}</p>
+                )}
               </div>
             </div>
 
             <div className="space-y-4">
               <Label>Preferred Pace</Label>
-              <RadioGroup onValueChange={handlePaceChange} value={formData.preferredPace}>
+              <RadioGroup onValueChange={handlePaceChange} value={watch('preferredPace')}>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="relaxed" id="relaxed" />
                   <label htmlFor="relaxed">Relaxed</label>
@@ -194,6 +235,9 @@ export default function CreateItineraryForm({ themeParks }: CreateItineraryFormP
                   <label htmlFor="packed">Packed</label>
                 </div>
               </RadioGroup>
+              {errors.preferredPace && (
+                <p className="text-red-500 text-sm">{errors.preferredPace.message}</p>
+              )}
             </div>
 
             <div className="space-y-4">
@@ -201,7 +245,7 @@ export default function CreateItineraryForm({ themeParks }: CreateItineraryFormP
               <div className="flex items-center space-x-2">
                 <Switch
                   id="earlyEntry"
-                  checked={formData.earlyEntry}
+                  checked={watch('earlyEntry')}
                   onCheckedChange={() => handleSwitchChange('earlyEntry')}
                 />
                 <label htmlFor="earlyEntry">Early Entry Access</label>
@@ -209,7 +253,7 @@ export default function CreateItineraryForm({ themeParks }: CreateItineraryFormP
               <div className="flex items-center space-x-2">
                 <Switch
                   id="lightningLaneMulti"
-                  checked={formData.lightningLaneMulti}
+                  checked={watch('lightningLaneMulti')}
                   onCheckedChange={() => handleSwitchChange('lightningLaneMulti')}
                 />
                 <label htmlFor="lightningLaneMulti">Lightning Lane Multi Pass</label>
@@ -217,7 +261,7 @@ export default function CreateItineraryForm({ themeParks }: CreateItineraryFormP
               <div className="flex items-center space-x-2">
                 <Switch
                   id="memoryMaker"
-                  checked={formData.memoryMaker}
+                  checked={watch('memoryMaker')}
                   onCheckedChange={() => handleSwitchChange('memoryMaker')}
                 />
                 <label htmlFor="memoryMaker">Memory Maker</label>
@@ -229,25 +273,22 @@ export default function CreateItineraryForm({ themeParks }: CreateItineraryFormP
               <Input
                 type="email"
                 id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
+                {...register('email')}
                 placeholder="Enter your email to receive the itinerary"
               />
+              {errors.email && <p className="text-red-500 text-sm">{errors.email.message}</p>}
             </div>
 
             <div className="space-y-4">
               <Label htmlFor="additionalComments">Additional Comments or Preferences</Label>
               <Textarea
                 id="additionalComments"
-                name="additionalComments"
-                value={formData.additionalComments}
-                onChange={handleInputChange}
+                {...register('additionalComments')}
                 placeholder="Enter any other requests or information that might affect your itinerary (e.g., preferred attractions, dining preferences, accessibility needs)"
               />
             </div>
 
-            <Button type="submit" disabled={isLoading}>
+            <Button type="submit" disabled={isLoading} id="submit-button">
               {isLoading ? 'Generating...' : 'Create Itinerary'}
             </Button>
           </form>
