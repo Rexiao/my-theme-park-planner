@@ -34,3 +34,14 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Deploy on GCP
+
+```bash
+gcloud builds submit --tag gcr.io/your-project-id/theme-park --project your-project-id
+```
+
+Notice that the environment variables are updated from the `.env.gcp` file.
+```bash
+gcloud run deploy --image gcr.io/your-project-id/theme-park --project your-project-id --platform managed --update-env-vars "$(grep -vE '^\s*(#|$)' .env.gcp | awk -F= '{printf "%s=%s,", $1, $2}' | sed 's/,$//')"
+```
