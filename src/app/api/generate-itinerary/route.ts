@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { createClient } from '@/utils/supabase/server';
-import { supabaseAdmin } from '@/utils/supabase/admin';
-// Initialize the OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+import { createSupabaseAdminClient } from '@/utils/supabase/admin';
+import getEnv from '@/utils/getenv';
 
 interface ItineraryFormData {
   parkId: string;
@@ -22,6 +19,7 @@ interface ItineraryFormData {
 }
 
 async function fetchThemeParkInfo(parkId: string) {
+  const supabaseAdmin = createSupabaseAdminClient();
   const { data: resources, error: resourcesError } = await supabaseAdmin
     .from('theme_park_info')
     .select('content')
@@ -129,6 +127,9 @@ ${resources.map((resource, index) => `Resource ${index + 1}:\n${resource}`).join
 }
 
 export async function POST(request: NextRequest) {
+  const openai = new OpenAI({
+    apiKey: getEnv('OPENAI_API_KEY')!,
+  });
   try {
     const formData: ItineraryFormData = await request.json();
     const { resources, example } = await fetchThemeParkInfo(formData.parkId);

@@ -4,6 +4,7 @@ import { encodedRedirect } from '@/utils/utils';
 import { createClient } from '@/utils/supabase/server';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
+import getEnv from '@/utils/getenv';
 
 export const signUpAction = async (formData: FormData) => {
   const email = formData.get('email')?.toString();
@@ -17,7 +18,7 @@ export const signUpAction = async (formData: FormData) => {
   }
 
   // Check if the invite code is correct
-  if (inviteCode !== process.env.INVITE_CODE) {
+  if (inviteCode !== getEnv('INVITE_CODE')) {
     return encodedRedirect('error', '/sign-up', 'Invalid invitation code');
   }
 
@@ -33,11 +34,7 @@ export const signUpAction = async (formData: FormData) => {
     console.error(error.code + ' ' + error.message);
     return encodedRedirect('error', '/sign-up', error.message);
   } else {
-    return encodedRedirect(
-      'success',
-      '/sign-up',
-      'Thanks for signing up! Please check your email for a verification link.',
-    );
+    return encodedRedirect('success', '/protected/itineraries', 'Thanks for signing up!');
   }
 };
 
