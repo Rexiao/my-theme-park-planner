@@ -77,7 +77,7 @@ export default function ItinerariesList() {
       <p className="mb-6 text-center text-lg">Welcome, {userEmail}!</p>
       {itineraries.length === 0 ? (
         <div className="text-center">
-          <p className="mb-4 text-lg">You don't have any itineraries yet.</p>
+          <p className="mb-4 text-lg">You don&apos;t have any itineraries yet.</p>
           <Button onClick={() => router.push('/protected/create-itinerary')}>
             Create Your First Itinerary
           </Button>
