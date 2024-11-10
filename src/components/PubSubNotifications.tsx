@@ -16,14 +16,14 @@ export default function PubSubNotifications() {
 
   useEffect(() => {
     let lastChecked = new Date().toISOString();
-    
+
     const pollInterval = setInterval(async () => {
       try {
         const response = await fetch(`/api/pubsub/notifications?since=${lastChecked}`);
         const messages = await response.json();
-        
+
         lastChecked = new Date().toISOString();
-        
+
         messages.forEach((message: PubSubMessage) => {
           if (message.type === 'create_itinerary') {
             if (message.status === 'success') {
@@ -49,4 +49,4 @@ export default function PubSubNotifications() {
   }, [toast]);
 
   return null;
-} 
+}
