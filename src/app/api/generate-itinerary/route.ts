@@ -3,6 +3,7 @@ import OpenAI from 'openai';
 import { createClient } from '@/utils/supabase/server';
 import { createSupabaseAdminClient } from '@/utils/supabase/admin';
 import getEnv from '@/utils/getenv';
+import { PubSub } from '@google-cloud/pubsub';
 
 interface ItineraryFormData {
   parkId: string;
@@ -130,29 +131,14 @@ export async function POST(request: NextRequest) {
   const openai = new OpenAI({
     apiKey: getEnv('OPENAI_API_KEY')!,
   });
+
+  const pubsub = new PubSub();
+  const topicName = 'theme-park';
+
   try {
     const formData: ItineraryFormData = await request.json();
-    const { resources, example } = await fetchThemeParkInfo(formData.parkId);
-    const detailedPrompt = generateDetailedPrompt(
-      formData,
-      resources.map((r) => r.content),
-      example,
-    );
 
-    console.log(detailedPrompt);
-
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [
-        { role: 'system', content: 'You are a helpful Disney World itinerary planner.' },
-        { role: 'user', content: detailedPrompt },
-      ],
-      max_completion_tokens: null,
-    });
-
-    const generatedItinerary = completion.choices[0].message.content;
-
-    // Save the generated itinerary to the database
+    // Get user ID first to use in notifications
     const supabase = createClient();
     const { data: user, error: userError } = await supabase.auth.getUser();
     if (userError) {
@@ -160,11 +146,36 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch user' }, { status: 500 });
     }
     const userId = user?.user?.id;
+
+    // Existing itinerary generation logic
+    const { resources, example } = await fetchThemeParkInfo(formData.parkId);
+    const detailedPrompt = generateDetailedPrompt(
+      formData,
+      resources.map((r) => r.content),
+      example,
+    );
+
+    // const completion = await openai.chat.completions.create({
+    //   model: 'gpt-4o',
+    //   messages: [
+    //     { role: 'system', content: 'You are a helpful Disney World itinerary planner.' },
+    //     { role: 'user', content: detailedPrompt },
+    //   ],
+    //   max_completion_tokens: null,
+    // });
+
+    // const generatedItinerary = completion.choices[0].message.content;
+    const generatedItinerary = 'test';
+    // sleep 5 seconds
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+
+    // Save to database
     const formattedDate = new Date(formData.date).toLocaleDateString('en-US', {
       month: 'long',
       day: 'numeric',
       year: 'numeric',
     });
+
     const { data, error } = await supabase
       .from('itineraries')
       .insert({
@@ -178,12 +189,57 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error('Error saving itinerary:', error);
+
+      // Publish failure notification
+      const failureMessage = {
+        type: 'create_itinerary',
+        status: 'error',
+        error: 'Failed to save itinerary',
+        timestamp: new Date().toISOString(),
+      };
+
+      await pubsub.topic(topicName).publishMessage({
+        data: Buffer.from(JSON.stringify(failureMessage)),
+        attributes: { userId },
+      });
+
       return NextResponse.json({ error: 'Failed to save itinerary' }, { status: 500 });
     }
+
+    // Publish success notification
+    const successMessage = {
+      type: 'create_itinerary',
+      status: 'success',
+      itineraryId: data[0].id,
+      timestamp: new Date().toISOString(),
+    };
+
+    await pubsub.topic(topicName).publish(Buffer.from(JSON.stringify(successMessage)), { userId });
 
     return NextResponse.json({ success: true, itineraryId: data[0].id });
   } catch (error) {
     console.error('Error generating itinerary:', error);
+
+    // Get user ID for notification (if available)
+    const supabase = createClient();
+    const { data: user } = await supabase.auth.getUser();
+    const userId = user?.user?.id;
+
+    if (userId) {
+      // Publish error notification
+      const errorMessage = {
+        type: 'create_itinerary',
+        status: 'error',
+        error: 'Failed to generate itinerary',
+        timestamp: new Date().toISOString(),
+      };
+
+      await pubsub.topic(topicName).publishMessage({
+        data: Buffer.from(JSON.stringify(errorMessage)),
+        attributes: { userId },
+      });
+    }
+
     return NextResponse.json({ error: 'Failed to generate itinerary' }, { status: 500 });
   }
 }

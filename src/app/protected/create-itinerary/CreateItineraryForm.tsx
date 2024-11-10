@@ -83,7 +83,7 @@ export default function CreateItineraryForm({ themeParks }: CreateItineraryFormP
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/generate-itinerary', {
+      fetch('/api/generate-itinerary', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -91,26 +91,16 @@ export default function CreateItineraryForm({ themeParks }: CreateItineraryFormP
         body: JSON.stringify(data),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to generate itinerary');
-      }
-
-      const responseData = await response.json();
-
-      if (responseData.success) {
-        toast({
-          title: 'Success',
-          description: 'Itinerary generated successfully!',
-        });
-        router.push(`/protected/itinerary/${responseData.itineraryId}`);
-      } else {
-        throw new Error(responseData.error || 'Failed to generate itinerary');
-      }
+      toast({
+        title: 'Success',
+        description: 'Your itinerary is being generated. You will find it in your itineraries list once ready.',
+      });
+      router.push('/protected/itineraries');
     } catch (error) {
-      console.error('Error generating itinerary:', error);
+      console.error('Error initiating itinerary generation:', error);
       toast({
         title: 'Error',
-        description: 'Failed to generate itinerary. Please try again.',
+        description: 'Failed to start itinerary generation. Please try again.',
         variant: 'destructive',
       });
     } finally {
