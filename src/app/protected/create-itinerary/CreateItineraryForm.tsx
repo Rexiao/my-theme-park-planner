@@ -21,6 +21,7 @@ import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
+import Link from 'next/link';
 
 interface ThemePark {
   id: number;
@@ -81,6 +82,7 @@ export default function CreateItineraryForm({ themeParks }: CreateItineraryFormP
 
   const onSubmit = async (data: FormData) => {
     setIsLoading(true);
+    router.push('/protected/itineraries');
 
     try {
       const response = await fetch('/api/generate-itinerary', {
@@ -100,9 +102,18 @@ export default function CreateItineraryForm({ themeParks }: CreateItineraryFormP
       if (responseData.success) {
         toast({
           title: 'Success',
-          description: 'Itinerary generated successfully!',
+          description: (
+            <div>
+              Itinerary generated successfully!{' '}
+              <Link
+                href={`/protected/itinerary/${responseData.itineraryId}`}
+                className="underline font-medium"
+              >
+                View Itinerary
+              </Link>
+            </div>
+          ),
         });
-        router.push(`/protected/itinerary/${responseData.itineraryId}`);
       } else {
         throw new Error(responseData.error || 'Failed to generate itinerary');
       }
